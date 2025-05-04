@@ -161,12 +161,93 @@ elif st.session_state.page == "new_patient_test":
         else:
             st.error(res.json()['detail'])
 
-elif st.session_state.page == "new_patient_prescription":    
-    # Wider right column for charts
-    form_col, chart_col = st.columns([3, 4])
+###
+# elif st.session_state.page == "new_patient_prescription":
+#     # Wider right column for charts
+#     form_col, chart_col = st.columns([3, 4])
 
-    # Left: Prescription form
-    with form_col:
+#     # Left: Prescription form
+#     with form_col:
+#         st.markdown("### Generate Prescription")
+#         with st.form("prescription_form"):
+#             medicine = st.text_input("Medicine Name")
+#             dosage = st.text_input("Dosage Instruction (e.g., 1x daily)")
+#             duration = st.number_input("Duration (days)", min_value=1)
+#             prescribed_date = st.date_input("Prescribed Date", value=datetime.date.today())
+#             submitted5 = st.form_submit_button("Generate Prescription")
+
+#         if submitted5:
+#             payload = {
+#                 "appointment_id": st.session_state.appointment_id,
+#                 "prescribed_date": str(prescribed_date),
+#                 "medicine_name": medicine,
+#                 "dosage": dosage,
+#                 "duration_days": duration
+#             }
+#             res = requests.post(f"{BASE_URL}/prescriptions", json=payload)
+#             if res.status_code == 200:
+#                 st.session_state.prescription_id = res.json()["prescription_id"]
+#                 st.success(f"Prescription generated. ID: {st.session_state.prescription_id}")
+#                 st.balloons()
+#             else:
+#                 st.error(res.json()['detail'])
+
+#     # Right: Title and charts
+#     with chart_col:
+#         st.markdown("### Health Analysis Charts")
+
+#         try:
+#             response = requests.get(f"{BASE_URL}/get_analysis")
+#             if response.status_code == 200:
+#                 df = pd.DataFrame(response.json())
+
+#                 g1, g2 = st.columns(2)
+
+#                 with g1:
+#                     fig1, ax1 = plt.subplots(figsize=(6, 4))
+#                     ax1.scatter(df["age"], df["ap_hi"], alpha=0.7, s=30)
+#                     ax1.set_title("Age vs ap_hi")
+#                     ax1.set_xlabel("Age")
+#                     ax1.set_ylabel("ap_hi")
+#                     st.pyplot(fig1, use_container_width=True)
+
+#                 with g2:
+#                     fig2, ax2 = plt.subplots(figsize=(6, 4))
+#                     ax2.scatter(df["age"], df["ap_lo"], alpha=0.7, s=30)
+#                     ax2.set_title("Age vs ap_lo")
+#                     ax2.set_xlabel("Age")
+#                     ax2.set_ylabel("ap_lo")
+#                     st.pyplot(fig2, use_container_width=True)
+
+#                 g3, g4 = st.columns(2)
+
+#                 with g3:
+#                     fig3, ax3 = plt.subplots(figsize=(6, 4))
+#                     ax3.scatter(df["age"], df["cholesterol"], alpha=0.7, s=30)
+#                     ax3.set_title("Age vs Cholesterol")
+#                     ax3.set_xlabel("Age")
+#                     ax3.set_ylabel("Cholesterol")
+#                     st.pyplot(fig3, use_container_width=True)
+
+#                 with g4:
+#                     fig4, ax4 = plt.subplots(figsize=(6, 4))
+#                     ax4.scatter(df["age"], df["gluc"], alpha=0.7, s=30)
+#                     ax4.set_title("Age vs Glucose")
+#                     ax4.set_xlabel("Age")
+#                     ax4.set_ylabel("Glucose")
+#                     st.pyplot(fig4, use_container_width=True)
+
+#             else:
+#                 st.error("Failed to fetch analysis data.")
+#         except Exception as e:
+#             st.error(f"Error occurred: {e}")
+###
+
+elif st.session_state.page == "new_patient_prescription":    
+    col1, col2, col3 = st.columns([4, 3.5, 5])
+
+    # ------------------ Column 1: Prescription Form ------------------ #
+    with col1:
         st.markdown("### Generate Prescription")
         with st.form("prescription_form"):
             medicine = st.text_input("Medicine Name")
@@ -191,55 +272,84 @@ elif st.session_state.page == "new_patient_prescription":
             else:
                 st.error(res.json()['detail'])
 
-    # Right: Title and charts
-    with chart_col:
-        st.markdown("### Health Analysis Charts")
+    # ------------------ Column 2: Patient Snapshot ------------------ #
+    with col2:
+        st.markdown("### Patient Snapshot")
+
+        # Fetch patient details
+        try:
+            pat_res = requests.get(f"{BASE_URL}/patients/{st.session_state.patient_id}")
+            if pat_res.status_code == 200:
+                pdata = pat_res.json()
+                patient = pdata["patient"]
+                lifestyle = pdata["lifestyle"]
+
+                st.markdown("**Basic Info**")
+                st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name: {patient['name']}", unsafe_allow_html=True)
+                st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Age: {patient['age']}", unsafe_allow_html=True)
+                st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gender: {'Male' if patient['gender']==1 else 'Female'}", unsafe_allow_html=True)
+                st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Height: {patient['height']} cm", unsafe_allow_html=True)
+                st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Weight: {patient['weight']} kg", unsafe_allow_html=True)
+
+                st.markdown("**Lifestyle**")
+                st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Smoker: {'Yes' if lifestyle['smoke'] else 'No'}")
+                st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Alcohol: {'Yes' if lifestyle['alco'] else 'No'}")
+                st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Active: {'Yes' if lifestyle['active'] else 'No'}")
+
+            else:
+                st.warning("Failed to load patient details.")
+
+            # Fetch test details
+            rec_res = requests.get(f"{BASE_URL}/records/{st.session_state.appointment_id}")
+            if rec_res.status_code == 200:
+                test = rec_res.json().get("test_details")
+                if test:
+                    st.markdown("**Test Results**")
+                    st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Systolic BP: {test['ap_hi']}")
+                    st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Diastolic BP: {test['ap_lo']}")
+                    st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cholesterol: {test['cholesterol']}")
+                    st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Glucose: {test['gluc']}")
+                else:
+                    st.warning("No test data available.")
+            else:
+                st.warning("Failed to fetch test details.")
+
+        except Exception as e:
+            st.error(f"Error loading snapshot: {e}")
+
+    # ------------------ Column 3: Health Charts ------------------ #
+    with col3:
+        st.markdown("### Test Result Trends by Age")
 
         try:
             response = requests.get(f"{BASE_URL}/get_analysis")
             if response.status_code == 200:
                 df = pd.DataFrame(response.json())
 
-                g1, g2 = st.columns(2)
+                fig1, ax1 = plt.subplots()
+                ax1.scatter(df["age"], df["ap_hi"], alpha=0.7)
+                ax1.set_title("Age vs Systolic BP")
+                st.pyplot(fig1, use_container_width=True)
 
-                with g1:
-                    fig1, ax1 = plt.subplots(figsize=(6, 4))
-                    ax1.scatter(df["age"], df["ap_hi"], alpha=0.7, s=30)
-                    ax1.set_title("Age vs ap_hi")
-                    ax1.set_xlabel("Age")
-                    ax1.set_ylabel("ap_hi")
-                    st.pyplot(fig1, use_container_width=True)
+                fig2, ax2 = plt.subplots()
+                ax2.scatter(df["age"], df["ap_lo"], alpha=0.7)
+                ax2.set_title("Age vs Diastolic BP")
+                st.pyplot(fig2, use_container_width=True)
 
-                with g2:
-                    fig2, ax2 = plt.subplots(figsize=(6, 4))
-                    ax2.scatter(df["age"], df["ap_lo"], alpha=0.7, s=30)
-                    ax2.set_title("Age vs ap_lo")
-                    ax2.set_xlabel("Age")
-                    ax2.set_ylabel("ap_lo")
-                    st.pyplot(fig2, use_container_width=True)
+                fig3, ax3 = plt.subplots()
+                ax3.scatter(df["age"], df["cholesterol"], alpha=0.7)
+                ax3.set_title("Age vs Cholesterol")
+                st.pyplot(fig3, use_container_width=True)
 
-                g3, g4 = st.columns(2)
-
-                with g3:
-                    fig3, ax3 = plt.subplots(figsize=(6, 4))
-                    ax3.scatter(df["age"], df["cholesterol"], alpha=0.7, s=30)
-                    ax3.set_title("Age vs Cholesterol")
-                    ax3.set_xlabel("Age")
-                    ax3.set_ylabel("Cholesterol")
-                    st.pyplot(fig3, use_container_width=True)
-
-                with g4:
-                    fig4, ax4 = plt.subplots(figsize=(6, 4))
-                    ax4.scatter(df["age"], df["gluc"], alpha=0.7, s=30)
-                    ax4.set_title("Age vs Glucose")
-                    ax4.set_xlabel("Age")
-                    ax4.set_ylabel("Glucose")
-                    st.pyplot(fig4, use_container_width=True)
+                fig4, ax4 = plt.subplots()
+                ax4.scatter(df["age"], df["gluc"], alpha=0.7)
+                ax4.set_title("Age vs Glucose")
+                st.pyplot(fig4, use_container_width=True)
 
             else:
                 st.error("Failed to fetch analysis data.")
         except Exception as e:
-            st.error(f"Error occurred: {e}")
+            st.error(f"Error loading charts: {e}")
 
 # ------------------ EXISTING PATIENT FLOW ------------------ #
 elif st.session_state.page == "existing_patient":
