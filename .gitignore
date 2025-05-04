@@ -2,4 +2,4 @@
 __pycache__/
 
 # Virtual Environment
-.venv/
+adt_env/
