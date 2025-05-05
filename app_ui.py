@@ -31,7 +31,7 @@ if "logged_in_user" not in st.session_state:
 if "role" not in st.session_state:
     st.session_state.role = None
 
-st.title("🏥 Healthcare Management System")
+st.title("🏥 Cardiovascular Healthcare App")
 
 # ------------------ LOGIN PAGE ------------------ #
 if st.session_state.page == "login":
@@ -140,9 +140,12 @@ elif st.session_state.page == "new_patient_test":
     with st.form("test_form"):
         ap_hi = st.number_input("Systolic BP", min_value=80, max_value=300)
         ap_lo = st.number_input("Diastolic BP", min_value=40, max_value=200)
-        chol = st.selectbox("Cholesterol Level", [1, 2, 3])
-        gluc = st.selectbox("Glucose Level", [1, 2, 3])
+        chol = st.selectbox("Cholesterol Level", ["Normal", "Above Normal", "Well Above Normal"])
+        gluc = st.selectbox("Glucose Level", ["Normal", "Above Normal", "Well Above Normal"])
         submitted4 = st.form_submit_button("Submit Test")
+
+        chol = 1 if chol == "Normal" else 2 if chol == "Above Normal" else 3
+        gluc = 1 if gluc == "Normal" else 2 if gluc == "Above Normal" else 3
 
     if submitted4:
         payload = {
@@ -160,88 +163,6 @@ elif st.session_state.page == "new_patient_test":
             st.rerun()
         else:
             st.error(res.json()['detail'])
-
-###
-# elif st.session_state.page == "new_patient_prescription":
-#     # Wider right column for charts
-#     form_col, chart_col = st.columns([3, 4])
-
-#     # Left: Prescription form
-#     with form_col:
-#         st.markdown("### Generate Prescription")
-#         with st.form("prescription_form"):
-#             medicine = st.text_input("Medicine Name")
-#             dosage = st.text_input("Dosage Instruction (e.g., 1x daily)")
-#             duration = st.number_input("Duration (days)", min_value=1)
-#             prescribed_date = st.date_input("Prescribed Date", value=datetime.date.today())
-#             submitted5 = st.form_submit_button("Generate Prescription")
-
-#         if submitted5:
-#             payload = {
-#                 "appointment_id": st.session_state.appointment_id,
-#                 "prescribed_date": str(prescribed_date),
-#                 "medicine_name": medicine,
-#                 "dosage": dosage,
-#                 "duration_days": duration
-#             }
-#             res = requests.post(f"{BASE_URL}/prescriptions", json=payload)
-#             if res.status_code == 200:
-#                 st.session_state.prescription_id = res.json()["prescription_id"]
-#                 st.success(f"Prescription generated. ID: {st.session_state.prescription_id}")
-#                 st.balloons()
-#             else:
-#                 st.error(res.json()['detail'])
-
-#     # Right: Title and charts
-#     with chart_col:
-#         st.markdown("### Health Analysis Charts")
-
-#         try:
-#             response = requests.get(f"{BASE_URL}/get_analysis")
-#             if response.status_code == 200:
-#                 df = pd.DataFrame(response.json())
-
-#                 g1, g2 = st.columns(2)
-
-#                 with g1:
-#                     fig1, ax1 = plt.subplots(figsize=(6, 4))
-#                     ax1.scatter(df["age"], df["ap_hi"], alpha=0.7, s=30)
-#                     ax1.set_title("Age vs ap_hi")
-#                     ax1.set_xlabel("Age")
-#                     ax1.set_ylabel("ap_hi")
-#                     st.pyplot(fig1, use_container_width=True)
-
-#                 with g2:
-#                     fig2, ax2 = plt.subplots(figsize=(6, 4))
-#                     ax2.scatter(df["age"], df["ap_lo"], alpha=0.7, s=30)
-#                     ax2.set_title("Age vs ap_lo")
-#                     ax2.set_xlabel("Age")
-#                     ax2.set_ylabel("ap_lo")
-#                     st.pyplot(fig2, use_container_width=True)
-
-#                 g3, g4 = st.columns(2)
-
-#                 with g3:
-#                     fig3, ax3 = plt.subplots(figsize=(6, 4))
-#                     ax3.scatter(df["age"], df["cholesterol"], alpha=0.7, s=30)
-#                     ax3.set_title("Age vs Cholesterol")
-#                     ax3.set_xlabel("Age")
-#                     ax3.set_ylabel("Cholesterol")
-#                     st.pyplot(fig3, use_container_width=True)
-
-#                 with g4:
-#                     fig4, ax4 = plt.subplots(figsize=(6, 4))
-#                     ax4.scatter(df["age"], df["gluc"], alpha=0.7, s=30)
-#                     ax4.set_title("Age vs Glucose")
-#                     ax4.set_xlabel("Age")
-#                     ax4.set_ylabel("Glucose")
-#                     st.pyplot(fig4, use_container_width=True)
-
-#             else:
-#                 st.error("Failed to fetch analysis data.")
-#         except Exception as e:
-#             st.error(f"Error occurred: {e}")
-###
 
 elif st.session_state.page == "new_patient_prescription":    
     col1, col2, col3 = st.columns([4, 3.5, 5])
